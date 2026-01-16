@@ -94,6 +94,20 @@ am ensure_project '{"human_key": "<absolute-project-path>"}'
 | `task_description` | Yes      | `Orchestrator for <epic-id>`          |
 | `name`             | No       | Auto-generated (e.g. `GoldFox`)       |
 
+### Step 3: Pre-establish contacts with workers (REQUIRED)
+
+Before spawning workers, establish contact with all worker agent names that will be used.
+This is required because upstream Agent Mail requires contact approval before messaging.
+
+```bash
+# For each worker agent name (e.g., BlueLake, GreenCastle, RedStone):
+am macro_contact_handshake '{"project_key": "<path>", "requester": "<OrchestratorName>", "target": "BlueLake", "auto_accept": true}'
+am macro_contact_handshake '{"project_key": "<path>", "requester": "<OrchestratorName>", "target": "GreenCastle", "auto_accept": true}'
+# ... repeat for each worker
+```
+
+**Note**: Worker names must be pre-determined. Use names from the execution plan or generate them beforehand.
+
 ---
 
 ## Phase 3: Spawn Worker Subagents
@@ -289,7 +303,7 @@ bd close <epic-id> --reason "All tracks complete"
 | Phase      | Tool / Command                                                               |
 | ---------- | ---------------------------------------------------------------------------- |
 | Read Plan  | `Read` tool → `history/<feature>/execution-plan.md`                          |
-| Initialize | `am ensure_project`, `am register_agent` |
+| Initialize | `am ensure_project`, `am register_agent`, `am macro_contact_handshake` (for each worker) |
 | Spawn      | `Task` tool for each track (max 4 parallel)                                  |
 | Monitor    | `am fetch_inbox`, `am search_messages`   |
 | Resolve    | `am reply_message` for blockers                            |
