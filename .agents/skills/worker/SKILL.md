@@ -42,7 +42,17 @@ Executes beads within an assigned track, maintaining context via Agent Mail.
 | `task_description` | Yes      | `Track N: <description>`  |
 | `name`             | No       | Auto-generated if omitted |
 
-### 2. Understand Your Assignment
+### 2. Establish Contact with Orchestrator (REQUIRED)
+
+After registering, establish contact with the orchestrator to enable messaging.
+
+```bash
+am macro_contact_handshake '{"project_key": "<path>", "requester": "<YourAgentName>", "target": "<OrchestratorName>", "auto_accept": true}'
+```
+
+**Note**: The orchestrator should have already pre-established contact from their side, but this ensures bidirectional approval.
+
+### 3. Understand Your Assignment
 
 From orchestrator: **Track number**, **Beads (in order)**, **File scope**, **Epic thread** (`<epic-id>`), **Track thread** (`track:<AgentName>:<epic-id>`)
 
@@ -246,6 +256,7 @@ Track N (<AgentName>) Complete:
 ### Bead Lifecycle Checklist
 
 ```
+SETUP: register_agent → macro_contact_handshake (with orchestrator)
 START: summarize_thread → fetch_inbox → file_reservation_paths → bd update
 WORK:  finder → edit_file → get_diagnostics → check inbox
 DONE:  verify → bd close → send_message (orchestrator) → send_message (self) → release

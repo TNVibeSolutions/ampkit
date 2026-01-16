@@ -1,0 +1,66 @@
+{
+  "project_name": "MyProject",
+  "subtasks": [
+    {
+      "platform": "BE",
+      "title": "User Authentication API",
+      "details": [
+        "Implement JWT token generation",
+        "Add refresh token endpoint",
+        "Implement rate limiting middleware"
+      ],
+      "tests": [
+        "Verify token generation with valid credentials",
+        "Verify token refresh flow works",
+        "Verify rate limiting blocks excessive requests"
+      ],
+      "files": [
+        "src/auth/handler.py",
+        "src/auth/jwt.py",
+        "src/middleware/rate_limit.py"
+      ],
+      "dependencies": ["Database schema migration"],
+      "estimate": "8h"
+    },
+    {
+      "platform": "FE",
+      "title": "Login Page Component",
+      "details": [
+        "Create login form with email/password",
+        "Add form validation",
+        "Integrate with auth API",
+        "Handle error states"
+      ],
+      "tests": [
+        "Verify form validation shows errors",
+        "Verify successful login redirects to dashboard",
+        "Verify error message displayed on failed login"
+      ],
+      "files": [
+        "src/pages/Login.tsx",
+        "src/components/LoginForm.tsx"
+      ],
+      "dependencies": ["User Authentication API"],
+      "estimate": "6h"
+    },
+    {
+      "platform": "DevOps",
+      "title": "CI/CD Pipeline Setup",
+      "details": [
+        "Configure GitHub Actions workflow",
+        "Add test runner step",
+        "Add deployment to staging"
+      ],
+      "tests": [
+        "Verify pipeline runs on push",
+        "Verify tests execute successfully",
+        "Verify deployment to staging works"
+      ],
+      "files": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/deploy.yml"
+      ],
+      "estimate": "4h"
+    }
+  ]
+}
