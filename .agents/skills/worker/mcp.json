@@ -1,0 +1,17 @@
+{
+	"shadcn": {
+		"type": "stdio",
+		"command": "npx",
+		"args": [
+			"shadcn@latest",
+			"mcp"
+		],
+		"includeTools": [
+			"search_items_in_registries",
+			"view_items_in_registries",
+			"get_item_examples_from_registries",
+			"get_add_command_for_items",
+			"get_audit_checklist"
+		]
+	}
+}
