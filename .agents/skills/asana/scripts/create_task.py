@@ -17,11 +17,6 @@ ASANA_API_BASE = "https://app.asana.com/api/1.0"
 # Platform mapping
 PLATFORMS = ["BE", "FE", "DevOps", "QA", "Mobile", "Design", "Docs"]
 
-# Known custom field GIDs for Dev Hours (can be extended per project)
-DEV_HOURS_FIELD_GIDS = [
-    "1198960082564686",  # Goldfish Code workspace
-]
-
 
 def load_env():
     """Load .env file from asana skill directory."""

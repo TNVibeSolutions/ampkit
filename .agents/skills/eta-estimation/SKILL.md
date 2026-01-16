@@ -1,216 +1,236 @@
 ---
 name: eta-estimation
-description: Create quick ballpark ETA reports for bidding. Use when estimating effort to win bids - focuses on solution approach and rough hours, NOT detailed task breakdowns. Target < 30 minutes per estimate.
+description: Create quick ballpark ETA reports for bidding. Use when estimating effort for new projects - focuses on solution approach and rough hours. Target < 30 minutes per estimate.
+version: 2.0.0
 ---
 
 # Ballpark ETA Skill
 
-Fast, competitive estimates for winning bids. Solution-focused, not code-focused.
-
-## Mission
+Quick estimates to win bids. Solution-focused, not code-focused.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  🎯 GOAL: Quick estimate to WIN BIDS                            │
-│                                                                 │
-│  ✅ Research → Solution → Rough Hours → Cost Range              │
-│  ❌ NOT: Detailed tasks, coding specs, exact hours              │
-│                                                                 │
-│  ⏱️ TARGET: < 30 minutes per estimate                           │
-└─────────────────────────────────────────────────────────────────┘
+🎯 GOAL: Ballpark estimate to WIN BIDS (< 30 min)
+
+✅ Input → Research → Solution → ETA Table
+❌ NOT: Detailed tasks, coding specs, exact hours
 ```
 
 ---
 
-## Workflow (5 Phases, ~35 min total)
+## Workflow (3 Phases)
 
 ```
-📥 Phase 0: Extract & Analyze (5 min)
+📥 Phase 1: Collect & Extract (5-10 min)
     ↓
-❓ Phase 1: Clarification Questions (5 min)  ← ASK BEFORE ESTIMATE
+🔬 Phase 2: Research & Solution (10-15 min)
     ↓
-🔬 Phase 2: Research & Solution (15 min) ← MAIN FOCUS
-    ↓
-🧮 Phase 3: Ballpark Numbers (5 min)
-    ↓
-📄 Phase 4: Generate Report (5 min)
+📊 Phase 3: ETA Table (5-10 min)
 ```
 
 ---
 
-## Phase 0: Extract & Analyze (5 min)
+## Phase 1: Collect & Extract
 
-### Step 0.1: Collect All Assets (Iterative)
+### 1.1 Collect Assets
 
-**IMPORTANT:** Ask for assets repeatedly until user confirms "done" or "no more".
+Ask user for all available assets:
 
 ```
-Loop:
-  → "Do you have any additional assets? (PDF, images, mockups, docs, etc.)"
-  → User provides asset OR confirms "no more"
-  → If asset provided: process & ask again
-  → If "no more": proceed to Step 0.2
-```
-
-**Ask template:**
-```
-I've received [X]. Do you have any additional assets to share?
+Please share all available assets for this project:
 - 📄 PDF/Word documents (SOW, specs, requirements)
 - 🖼️ Images/Screenshots (mockups, designs, wireframes)
 - 📝 Markdown/Text files (notes, user stories)
 - 🔗 URLs (Figma, existing site, references)
 
-Reply "done" or "no more" when you've shared everything.
+Reply "done" when you've shared everything.
 ```
 
-### Step 0.2: Process & Cache Assets
+### 1.2 Process Assets
 
-For each asset, extract key info and cache to Agent Mail for context management:
+**Asset Processing Priority:**
 
-| Input Type | Tool | Cache Strategy |
-|------------|------|----------------|
-| PDF | `skill("ai-multimodal")` | Extract summary → cache to AM |
-| Image/Screenshot | `skill("ai-multimodal")` | Describe features → cache to AM |
-| Text/Markdown | `Read` | Scan scope → cache key points |
-| URL | `read_web_page` | Pull relevant sections → cache |
+1. **`look_at`** - Built-in tool, try first for images/PDFs
+2. **`skill("ai-multimodal")`** - If available, better vision capabilities
+3. **Fallback tools** - `Read`, `read_web_page`, `skill("docx")`, `skill("pdf")`
 
-**Cache to Agent Mail** (prevents context overflow):
+**Processing Flow:**
+
+```
+For each asset:
+  1. Try look_at (built-in, works for images/PDFs)
+  2. If need better analysis → check skill("ai-multimodal")
+  3. If skill unavailable → use fallback tools
+  4. Extract key info → save to assets.md
+```
+
+**Tool Selection by Asset Type:**
+
+| Asset Type | Primary | Secondary | Fallback |
+|------------|---------|-----------|----------|
+| Image/Screenshot | `look_at` | `skill("ai-multimodal")` | - |
+| PDF | `look_at` | `skill("ai-multimodal")` | `skill("pdf")` |
+| DOCX | `skill("docx")` | - | - |
+| Markdown/Text | `Read` | - | - |
+| URL | `read_web_page` | - | - |
+
+**Example Processing:**
+
+```python
+# Image/PDF - try look_at first
+look_at(
+  path="assets/dashboard-mockup.png",
+  objective="Extract UI components, layout structure, and features",
+  context="ETA estimation for new project"
+)
+
+# If need deeper analysis, check ai-multimodal skill
+skill("ai-multimodal")  # Load if available
+# Then use Gemini for better vision analysis
+
+# DOCX - use docx skill
+skill("docx")
+# Extract requirements from document
+
+# Markdown - direct read
+Read("path/to/requirements.md")
+
+# URL - fetch and extract
+read_web_page(
+  url="https://figma.com/...",
+  objective="Extract design components and layout"
+)
+```
+
+### 1.3 Track & Cache Assets
+
+**Tạo folder assets để lưu trữ và reuse:**
 
 ```bash
-am send_message \
-  --sender-name "ETAArchitect" \
-  --to '["ETAArchitect"]' \
-  --thread-id "eta:<project-slug>" \
-  --subject "[ASSET] <asset-name>" \
-  --body-md "<extracted summary from asset>"
+mkdir -p plans/$(date +%Y%m%d)-<project-slug>/assets
 ```
 
-### Step 0.3: Consolidate Requirements
+**Copy/move assets vào folder:**
+```bash
+# Copy assets để tracking
+cp <path-to-asset> plans/YYYYMMDD-<project>/assets/
+```
 
-Save consolidated input to `00-input.md`:
+**Tạo asset registry** `plans/YYYYMMDD-<project>/assets.md`:
 
 ```markdown
-# Input: <Project Name>
+# Asset Registry: <Project Name>
 
-## Assets Received
+## Tracked Assets
 
-| # | Type | Name | Summary |
-|---|------|------|---------|
-| 1 | PDF | requirements.pdf | Main SOW with 15 features |
-| 2 | Image | mockup-dashboard.png | Dashboard with 4 widgets |
-| 3 | Image | mockup-settings.png | Settings page layout |
+| ID | Type | Filename | Summary | Extracted |
+|----|------|----------|---------|-----------|
+| A1 | PDF | requirements.pdf | SOW with 15 features | ✅ |
+| A2 | Image | dashboard-mockup.png | Main dashboard layout | ✅ |
+| A3 | DOCX | user-stories.docx | 20 user stories | ✅ |
+| A4 | URL | figma.com/... | Design system | ✅ |
 
-## Key Requirements (extracted)
+## Asset Details
 
-- Requirement 1
-- Requirement 2
-- Requirement 3
+### A1: requirements.pdf
+- **Location:** `assets/requirements.pdf`
+- **Pages:** 12
+- **Key Extracts:**
+  - Feature list (page 2-5)
+  - User roles (page 6)
+  - Timeline (page 10)
 
-## Screens/Pages Identified
+### A2: dashboard-mockup.png
+- **Location:** `assets/dashboard-mockup.png`
+- **Components identified:**
+  - Header with navigation
+  - 4 stat widgets
+  - Data table
+  - Chart section
 
-- [ ] Dashboard
-- [ ] Settings
-- [ ] ...
-
-## Unknowns
-
-- ?
-- ?
+### A3: user-stories.docx
+- **Location:** `assets/user-stories.docx`
+- **Stories:** 20 total
+- **Epics mapped:** E1 (5), E2 (8), E3 (4), E4 (3)
 ```
 
-### Quick Extraction (per asset type)
+**Reuse trong các session sau:**
 
-| Input Type | Tool | Action |
-|------------|------|--------|
-| PDF | `skill("ai-multimodal")` | Extract key requirements only |
-| Image/Screenshot | `skill("ai-multimodal")` | Describe main features |
-| Text/Markdown | `Read` | Scan for scope |
-| URL | `read_web_page` | Pull relevant sections |
+Khi cần reuse context từ project đã ETA:
+```
+Read plans/YYYYMMDD-<project>/assets.md để xem asset registry
+Read plans/YYYYMMDD-<project>/context.md để xem extracted requirements
+```
 
-### Save to Project Folder
+---
+
+### 1.4 Create Context File
+
+Save extracted info to project folder for reuse:
 
 ```bash
 mkdir -p plans/$(date +%Y%m%d)-<project-slug>
 ```
 
----
-
-## Phase 1: Clarification Questions (5 min)
-
-**CRITICAL:** Ask questions BEFORE estimating to avoid scope creep and missed requirements.
-
-### Analyze & Identify Gaps
-
-After extracting requirements, analyze:
-
-| Check | Look For |
-|-------|----------|
-| **Assets** | Are mockups/designs complete? Missing screens? |
-| **Integrations** | Which third-party APIs? Auth providers? |
-| **Data** | Data migration needed? Volume expectations? |
-| **Users** | User roles? Permissions complexity? |
-| **Platform** | Web only? Mobile? Responsive requirements? |
-| **Timeline** | Hard deadline? Phased delivery? |
-
-### Question Categories
-
-Save to `00-clarifications.md`:
+Create `plans/YYYYMMDD-<project>/context.md`:
 
 ```markdown
-# Clarification Questions: <Project Name>
+# Context: <Project Name>
 
-## 🔴 Blockers (Must answer before estimate)
+## Assets Received
 
-1. [Question that significantly affects scope/hours]
-2. [Missing critical information]
+| # | Type | Name | Summary |
+|---|------|------|---------|
+| 1 | PDF | requirements.pdf | 15 features, 3 user roles |
+| 2 | Image | dashboard.png | Main dashboard with 4 widgets |
 
-## 🟡 Important (Affects estimate accuracy)
+## Key Requirements
 
-1. [Question about unclear requirement]
-2. [Integration/API details needed]
+1. [Requirement 1]
+2. [Requirement 2]
+3. [Requirement 3]
 
-## 🟢 Nice to Know (Won't block estimate)
+## Screens Identified
 
-1. [Preference questions]
-2. [Future phase considerations]
+- Dashboard
+- Settings
+- User Management
 
-## 📊 Impact on ETA
+## Open Questions
 
-| Question | If Yes | If No |
-|----------|--------|-------|
-| Need mobile app? | +40-60h | - |
-| Data migration? | +16-24h | - |
-| Multi-language? | +20-30h | - |
+- [Question 1]
+- [Question 2]
 ```
-
-### Example Questions by Domain
-
-| Domain | Common Questions |
-|--------|------------------|
-| **Auth** | SSO required? Which providers? 2FA/MFA? |
-| **Payments** | Which gateway? Subscription billing? Refunds? |
-| **Data** | Expected volume? Real-time sync? Offline mode? |
-| **UI/UX** | Design provided? Design system exists? Responsive? |
-| **Integrations** | API docs available? Rate limits? Sandbox access? |
 
 ---
 
-## Phase 2: Research & Solution (15 min) ← MAIN FOCUS
+## Phase 2: Research & Solution
 
-This is where you spend most time. Answer: **"How would we build this?"**
+### 2.1 Clarify (if needed)
 
-### Quick Research
+Ask critical questions before estimating:
 
-| Need | Tool | Time |
-|------|------|------|
-| Similar projects | `web_search` | 3 min |
-| Tech options | `web_search` | 3 min |
-| Library docs | `skill("docs-seeker")` | 3 min |
-| Architecture | `oracle` | 5 min |
+| Domain | Questions |
+|--------|-----------|
+| **Platform** | Web only? Mobile? Responsive? |
+| **Auth** | SSO? OAuth providers? 2FA? |
+| **Integrations** | Which APIs? Docs available? |
+| **Data** | Migration needed? Volume? |
+| **Timeline** | Hard deadline? Phased? |
 
-### Solution Approach Template
+### 2.2 Research
 
-Save to `01-research.md`:
+Use available skills:
+
+| Need | Skill/Tool |
+|------|------------|
+| Library docs | `skill("docs-seeker")` |
+| Tech comparison | `web_search` |
+| Architecture advice | `oracle` |
+| Similar solutions | `web_search` |
+
+### 2.3 Solution Approach
+
+Document in `plans/YYYYMMDD-<project>/solution.md`:
 
 ```markdown
 # Solution: <Project Name>
@@ -219,123 +239,158 @@ Save to `01-research.md`:
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| Backend | Node.js/Python/etc | [1 sentence] |
-| Frontend | React/Vue/etc | [1 sentence] |
-| Database | PostgreSQL/MongoDB | [1 sentence] |
-| Hosting | AWS/Vercel/etc | [1 sentence] |
+| Backend | Node.js/NestJS | Team expertise, TypeScript |
+| Frontend | React/Next.js | SSR, client preference |
+| Database | PostgreSQL | Relational data, ACID |
+| Hosting | AWS/Vercel | Scalability, cost |
 
-## Architecture (1 paragraph)
+## Architecture
 
-[How the pieces fit together. 3-5 sentences max.]
+[2-3 sentences describing how components connect]
 
-## Key Technical Decisions
+## Key Decisions
 
-1. **[Decision 1]**: [Approach] - [Why]
-2. **[Decision 2]**: [Approach] - [Why]
-
-## Alternatives Considered
-
-| Option | Pros | Cons | Verdict |
-|--------|------|------|---------|
-| A | ... | ... | ✅ Selected |
-| B | ... | ... | ❌ More complex |
+1. **[Decision]**: [Approach] - [Why]
+2. **[Decision]**: [Approach] - [Why]
 ```
 
 ---
 
-## Phase 3: Ballpark Estimate (5 min)
+## Phase 3: ETA Table
 
-### Epic-Level Sizing (NO task breakdown)
+### 3.1 Epic Sizing Guide
 
-| Size | Hours Range | Examples |
-|------|-------------|----------|
-| **S** | 8-16h | Simple CRUD, basic UI, config |
-| **M** | 16-40h | Auth, dashboard, standard API |
-| **L** | 40-80h | Complex integration, AI features |
-| **XL** | 80-160h | Full module, major subsystem |
+| Size | Hours | Examples |
+|------|-------|----------|
+| **S** | 8-16h | Simple CRUD, basic UI |
+| **M** | 16-40h | Auth, API integration |
+| **L** | 40-80h | Dashboard, complex flows |
+| **XL** | 80-160h | AI/ML, real-time sync |
 
-### Quick Estimation
+### 3.2 Common Epic Estimates
 
-Save to `02-estimate.md`:
+| Epic Type | Size | Hours |
+|-----------|------|-------|
+| Auth/Login | M | 24-32h |
+| Dashboard | L | 48-64h |
+| CRUD module | M | 20-30h |
+| API integration | M-L | 24-48h |
+| Payment | L | 40-60h |
+| Admin panel | M | 20-32h |
+| Reports/Export | S-M | 12-24h |
+| Testing & QA | M | 16-24h |
+
+### 3.3 Generate ETA Table
+
+**Output Format:**
 
 ```markdown
-# Estimate: <Project Name>
+# ETA: <Project Name>
 
-## ETA Breakdown
+## Epic Breakdown
 
-### E1: Authentication & Onboarding (24-32h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US1.1: As a user, I want to login | Setup auth module | 4h | BE |
-| | Login API endpoint | 4h | BE |
-| | Login UI form | 4h | FE |
-| US1.2: As a user, I want to register | Register API | 4h | BE |
-| | Register form | 4h | FE |
-| | Email verification | 4-8h | BE |
-
-### E2: Core Dashboard (48-64h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US2.1: As a user, I want to see overview | Dashboard layout | 8h | FE |
-| | Data APIs | 8h | BE |
-| US2.2: As a user, I want analytics | Charts components | 8h | FE |
-| | Analytics API | 8-12h | BE |
-| | Real-time updates | 16h | FS |
-
-### E3: API Integrations (24-32h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US3.1: As a system, I need external data | Third-party API setup | 8h | BE |
-| | Data sync service | 8-12h | BE |
-| | Error handling | 8h | BE |
-
-### E4: Admin & Settings (12-16h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US4.1: As admin, I want to manage users | User management UI | 4h | FE |
-| | Admin APIs | 4h | BE |
-| US4.2: As a user, I want to configure | Settings page | 4-8h | FS |
-
-### E5: Testing & Polish (16-24h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US5.1: As QA, I need quality | Integration tests | 8h | BE |
-| | E2E tests | 4-8h | FE |
-| | Bug fixes & polish | 4-8h | FS |
-
----
+| Epic | Task | Description | Platform | Hours |
+|------|------|-------------|----------|-------|
+| E1: Authentication | Setup auth module | JWT/OAuth configuration | BE | 8h |
+| | Login API | Endpoint with validation | BE | 4h |
+| | Login UI | Form with error handling | FE | 4h |
+| | Registration flow | API + UI + email verify | FS | 8-12h |
+| **E1 Total** | | | | **24-28h** |
+| E2: Dashboard | Dashboard layout | Responsive grid layout | FE | 8h |
+| | Data APIs | Aggregation endpoints | BE | 8h |
+| | Charts | Analytics components | FE | 8h |
+| | Real-time updates | WebSocket integration | FS | 16h |
+| **E2 Total** | | | | **40-48h** |
+| E3: Integrations | Third-party setup | API client configuration | BE | 8h |
+| | Data sync | Background job service | BE | 12h |
+| | Error handling | Retry logic, logging | BE | 8h |
+| **E3 Total** | | | | **28-32h** |
+| E4: Admin | User management | CRUD UI for users | FE | 8h |
+| | Admin APIs | Permission-based endpoints | BE | 8h |
+| | Settings page | Config management | FS | 8h |
+| **E4 Total** | | | | **24-28h** |
+| E5: QA | Integration tests | API test coverage | BE | 8h |
+| | E2E tests | Critical user flows | FE | 8h |
+| | Bug fixes | Polish and fixes | FS | 8h |
+| **E5 Total** | | | | **24h** |
+| **TOTAL** | | | | **140-160h** |
 
 ## Summary
 
-| Metric | Min | Max |
-|--------|-----|-----|
-| Base Hours | 124h | 168h |
-| Buffer (20%) | +25h | +34h |
-| **Total Hours** | **149h** | **202h** |
-| Duration (1 dev) | 3.7 weeks | 5 weeks |
-| Duration (2 devs) | 2 weeks | 2.5 weeks |
+| Metric | Range |
+|--------|-------|
+| Base Hours | 140-188h |
+| Buffer (+20%) | +28-38h |
+| **Total** | **168-226h** |
+| Duration (1 dev) | 4-6 weeks |
+| Duration (2 devs) | 2-3 weeks |
 
 ## Cost Estimate
 
 | Rate | Min | Max |
 |------|-----|-----|
-| $100/hr | $14,900 | $20,200 |
-| $125/hr | $18,625 | $25,250 |
-| $150/hr | $22,350 | $30,300 |
+| $100/hr | $16,800 | $22,600 |
+| $125/hr | $21,000 | $28,250 |
+| $150/hr | $25,200 | $33,900 |
 
-## Resource Allocation
+## Assumptions
 
-| Resource | Hours | % |
-|----------|-------|---|
-| BE | 80-100h | ~55% |
-| FE | 40-56h | ~30% |
-| FS | 24-46h | ~15% |
+1. Design provided by client
+2. Standard hosting requirements
+3. No data migration
+
+## Risks
+
+1. [Risk] - [Impact]
+2. [Risk] - [Impact]
+
+## Open Questions
+
+1. ❓ [Question affecting scope]
+2. ❓ [Question affecting timeline]
 ```
+
+---
+
+## Output Files
+
+| File | Purpose |
+|------|---------|
+| `plans/YYYYMMDD-<project>/assets.md` | Asset registry - tracking all inputs |
+| `plans/YYYYMMDD-<project>/assets/` | Folder chứa copies của assets |
+| `plans/YYYYMMDD-<project>/context.md` | Extracted requirements từ assets |
+| `plans/YYYYMMDD-<project>/solution.md` | Tech stack, architecture decisions |
+| `plans/YYYYMMDD-<project>/eta.md` | Final ETA table and summary |
+
+---
+
+## Reuse Context
+
+Khi cần tiếp tục hoặc update ETA cho project đã có:
+
+```bash
+# List existing ETA projects
+ls plans/
+
+# Load context từ project cũ
+Read plans/YYYYMMDD-<project>/assets.md    # Asset registry
+Read plans/YYYYMMDD-<project>/context.md   # Requirements
+Read plans/YYYYMMDD-<project>/solution.md  # Tech decisions
+Read plans/YYYYMMDD-<project>/eta.md       # Previous ETA
+```
+
+---
+
+## Quick Reference
+
+### Time Budget
+
+| Phase | Time |
+|-------|------|
+| Collect & Extract | 5-10 min |
+| Research & Solution | 10-15 min |
+| ETA Table | 5-10 min |
+| **Total** | **< 30 min** |
 
 ### Formula
 
@@ -345,157 +400,12 @@ Duration = Total ÷ 40h/week
 Cost = Total × rate
 ```
 
----
+### DO NOT
 
-## Phase 4: Generate Report (5 min)
-
-### Compile Final Ballpark ETA
-
-Save to `docs/{YYYYMMDD-prj}.md`:
-
-```markdown
-# Ballpark ETA: [Project Name]
-
-**Date:** YYYY-MM-DD
-**Type:** Ballpark Estimate (for bidding)
-
----
-
-## Solution Approach
-
-[2-3 paragraphs describing recommended tech stack and architecture]
-
-### Tech Stack
-
-| Layer | Choice |
-|-------|--------|
-| Backend | ... |
-| Frontend | ... |
-| Database | ... |
-
----
-
-## Effort Estimate
-
-### E1: [Epic Name] (24-32h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US1.1: As a user, I want to... | Task title | 4h | BE |
-| | Task title | 4h | BE |
-| | Task title | 4h | FE |
-
-### E2: [Epic Name] (48-64h)
-
-| User Story | Task | Hours | Resource |
-|------------|------|-------|----------|
-| US2.1: As a user, I want to... | Task title | 8h | FE |
-| | Task title | 8h | BE |
-
-(Continue for all epics...)
-
----
-
-## Summary
-
-| Metric | Range |
-|--------|-------|
-| **Total Hours** | **150-200h** |
-| **Duration** | **4-5 weeks** (1 dev) |
-| **Cost** | **$18,000 - $25,000** |
-
-### Resource Allocation
-
-| Resource | Hours | % |
-|----------|-------|---|
-| BE | X-Xh | ~XX% |
-| FE | X-Xh | ~XX% |
-| FS | X-Xh | ~XX% |
-
----
-
-## Key Risks
-
-1. [Risk 1] - [Mitigation]
-2. [Risk 2] - [Mitigation]
-3. [Risk 3] - [Mitigation]
-
----
-
-## Assumptions
-
-1. Client provides [X]
-2. Standard [Y] requirements
-3. No [Z] complexity
-
----
-
-## Open Questions
-
-1. ❓ [Question needing client input]
-2. ❓ [Question affecting scope]
-
----
-
-## Next Steps
-
-1. Client review & feedback
-2. Scope confirmation
-3. Contract & kickoff
-
----
-
-*Ballpark estimate for bidding purposes. Detailed planning after project confirmation.*
-```
-
----
-
-## Quick Reference
-
-### Time Budget
-
-| Phase | Max Time |
-|-------|----------|
-| Extract | 5 min |
-| Research | 15 min |
-| Estimate | 5 min |
-| Report | 5 min |
-| **Total** | **30 min** |
-
-### Epic Sizing Cheat Sheet
-
-| Epic Type | Size | Hours |
-|-----------|------|-------|
-| Auth/Login | M | 24-32h |
-| Dashboard | L | 48-64h |
-| CRUD module | M | 20-30h |
-| API integration | M-L | 24-48h |
-| Payment | L | 40-60h |
-| AI/ML feature | L-XL | 60-120h |
-| Admin panel | M | 20-32h |
-| Reports/Export | S-M | 12-24h |
-| Testing | M | 16-24h |
-
-### Cost Quick Calc
-
-| Hours | $100/hr | $125/hr | $150/hr |
-|-------|---------|---------|---------|
-| 100h | $10,000 | $12,500 | $15,000 |
-| 150h | $15,000 | $18,750 | $22,500 |
-| 200h | $20,000 | $25,000 | $30,000 |
-| 300h | $30,000 | $37,500 | $45,000 |
-
----
-
-## DO NOT (Time Killers)
-
-- ❌ Over-detailed task breakdown (sub-sub-tasks)
-- ❌ Exact hour counts (use ranges like 4-8h)
-- ❌ Code specifications
-- ❌ Database schemas
-- ❌ API endpoint lists
+- ❌ Detailed task breakdown
+- ❌ Exact hours (use ranges)
+- ❌ Code specs or DB schemas
 - ❌ Over-research (15 min max)
-- ❌ Multiple revision rounds
 
 ---
 
@@ -504,9 +414,8 @@ Save to `docs/{YYYYMMDD-prj}.md`:
 1. **Speed wins bids** - First reasonable estimate often wins
 2. **Ranges are honest** - "100-140h" better than "120h"
 3. **Solution sells** - Show you understand HOW to build it
-4. **Risks show expertise** - Calling out risks builds trust
-5. **20% buffer always** - Never bid without buffer
+4. **20% buffer always** - Never bid without buffer
 
 ---
 
-*Ballpark ETA = Win the bid first. Detailed planning comes after.*
+See [reference/report-template.md](reference/report-template.md) for full report template.
