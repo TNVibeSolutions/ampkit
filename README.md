@@ -20,24 +20,16 @@
 
 ## Sponsor
 
-<table>
-  <tr>
-    <td>
-      <a href="https://vibecodecheap.com/?ref=ampkit">
-        <img src="assets/vibecodecheap-banner.jpg" alt="VibeCodeCheap" width="450"/>
-      </a>
-    </td>
-    <td>
-      <strong><a href="https://vibecodecheap.com/?ref=ampkit">VibeCodeCheap</a> - AI Coding Subscriptions up to 80% OFF</strong><br/><br/>
-      🎯 <strong>Full support for Amp Code & Claude Code</strong> (streaming, tool use, extended thinking, subagents)<br/>
-      💰 <strong>$7.99/mo</strong> (vs $20 Claude Pro) | <strong>$29.99/mo</strong> (vs $100 Max 5x) | <strong>$49.99/mo</strong> (vs $200 Max 20x)<br/>
-      ✅ Claude Opus 4.5, Sonnet 4.5, Gemini 3 Pro | 99.9% Uptime<br/><br/>
-      <a href="https://vibecodecheap.com/?ref=ampkit"><strong>👉 Subscribe Now</strong></a>
-    </td>
-  </tr>
-</table>
+[![VibeCodeCheap](assets/vibecodecheap-sponsor-en.png)](https://vibecodecheap.com/)
+
+This project is sponsored by VibeCodeCheap - Affordable Claude Code & AI Agents.
+
+VibeCodeCheap provides access to premium LLM models like Claude Sonnet 4.5, Opus 4.5, Gemini 3 Pro through a unified OpenAI & Claude API compatible interface. Perfect for Claude Code and all AI coding agents.
+
+Start coding smarter: <https://vibecodecheap.com/>
 
 ---
+
 
 ## Skills
 
